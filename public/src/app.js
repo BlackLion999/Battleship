@@ -5,20 +5,25 @@ let model = {
     shipsSunk: 0,
 
     ships: [
-        { locations: ["0", "0", "0",], hits: ["", "", ""] },
-        { locations: ["0", "0", "0"], hits: ["", "", ""] },
-        { locations: ["0", "0", "0"], hits: ["", "", ""] },
-        { locations: ["0", "0", "0"], hits: ["", "", ""] },
+        { locations: [0, 0, 0], hits: ["", "", ""] },
+        { locations: [0, 0, 0], hits: ["", "", ""] },
+        { locations: [0, 0, 0], hits: ["", "", ""] },
+        { locations: [0, 0, 0], hits: ["", "", ""] }
     ],
 
     fire: function (guess) {
-        for (i = 0; i < this.numShips; i++) {
+        for (let i = 0; i < this.numShips; i++) {
             let ship = this.ships[i];
             let index = ship.locations.indexOf(guess);
-            if (index >= 0) {
-                ship.hits[index] = "hits";
+
+            if (ship.hits[index] === "hit") {
+                view.displayMessage("Oops, you already hit that location!");
+                return true;
+            } else if (index >= 0) {
+                ship.hits[index] = "hit";
                 view.displayHit(guess);
                 view.displayMessage("HIT!");
+
                 if (this.isSunk(ship)) {
                     view.displayMessage("You sank my battleship!");
                     this.shipsSunk++;
@@ -32,7 +37,7 @@ let model = {
     },
 
     isSunk: function (ship) {
-        for (i = 0; i < this.shipLength; i++) {
+        for (let i = 0; i < this.shipLength; i++) {
             if (ship.hits[i] !== "hit") {
                 return false;
             }
@@ -42,12 +47,14 @@ let model = {
 
     generateShipLocations: function () {
         let locations;
-        for (i = 0; i < this.numShips; i++) {
+        for (let i = 0; i < this.numShips; i++) {
             do {
-                locations = this.generateShipLocations();
-            } while (this.collisions(locations));
+                locations = this.generateShip();
+            } while (this.collision(locations));
             this.ships[i].locations = locations;
         }
+        console.log("Ships array: ");
+		console.log(this.ships);
     },
 
     generateShip: function () {
@@ -57,27 +64,27 @@ let model = {
 
         if (direction === 1) {
             row = Math.floor(Math.random() * this.boardSize);
-            col = Math.floor(Math.random() * (this.boardSize - this.shipLength));
+            col = Math.floor(Math.random() * (this.boardSize - this.shipLength + 1));
         } else {
-            row = Math.floor(Math.random() * (this.boardSize - this.shipLength));
+            row = Math.floor(Math.random() * (this.boardSize - this.shipLength + 1));
             col = Math.floor(Math.random() * this.boardSize);
         }
 
         let newShipLocations = [];
-        for (i = 0; i < this.shipLength; i++) {
+        for (let i = 0; i < this.shipLength; i++) {
             if (direction === 1) {
                 newShipLocations.push(row + "" + (col + i));
             } else {
-                newShipLocations.push((row + 1) + "" + col);
+                newShipLocations.push((row + i) + "" + col);
             }
         }
         return newShipLocations;
     },
 
-    collisions: function (locations) {
-        for (i = 0; i < this.numShips; i++) {
-            let ship = model.ships[i];
-            for (j = 0; j < locations.length; j++) {
+    collision: function (locations) {
+        for (let i = 0; i < this.numShips; i++) {
+            let ship = this.ships[i];
+            for (let j = 0; j < locations.length; j++) {
                 if (ship.locations.indexOf(locations[j]) >= 0) {
                     return true;
                 }
@@ -112,7 +119,7 @@ let controller = {
         if (location) {
             this.guesses++;
             let hit = model.fire(location);
-            if (hit && model.shipLength === model.numShips) {
+            if (hit && model.shipsSunk === model.numShips) {
                 view.displayMessage("You sank all my battleship, in " + this.guesses + " guesses");
             }
         }
@@ -121,12 +128,14 @@ let controller = {
 
 function parseGuess(guess) {
     let alphabet = ["A", "B", "C", "D", "E", "F", "G"];
+
     if (guess === null || guess.length !== 2) {
         alert("Oops, please enter a letter and a number on the board.")
     } else {
-        firstChare = guess.charAt(0);
-        let row = alphabet.indexOf(firstChare);
+        firstChar = guess.charAt(0);
+        let row = alphabet.indexOf(firstChar);
         let column = guess.charAt(1);
+
         if (isNaN(row) || isNaN(column)) {
             alert("Oops, that isn`t on the board");
         } else if (row < 0 || row >= model.boardSize || column < 0 || column >= model.boardSize) {
